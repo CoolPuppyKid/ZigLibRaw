@@ -15,6 +15,7 @@ pub fn build(b: *std.Build) !void {
 
     libraw.linkLibCpp();
     libraw.linkLibC();
+    libraw.linkSystemLibrary("ws2_32");
 
     libraw.addIncludePath(b.path("."));
 
@@ -30,6 +31,7 @@ pub fn build(b: *std.Build) !void {
         "src/demosaic",
         "src/integration",
         "src/metadata",
+        "src/stream",
         "src/postprocessing",
         "src/preprocessing",
         "src/tables",
@@ -46,25 +48,48 @@ pub fn build(b: *std.Build) !void {
     }
 
     libraw.addCSourceFiles(.{
-        .files = &.{"src/libraw_c_api.cpp"},
+        .root = b.path(""),
+        .files = &.{ "src/libraw_c_api.cpp", "src/libraw_datastream.cpp" },
         .flags = defines,
     });
 
-    const build_step = b.step("test-build", "Builds libraw");
-    build_step.dependOn(&libraw.step);
-
     b.installArtifact(libraw);
+
+    const example = b.addExecutable(.{
+        .root_module = b.addModule("example", .{ .target = target, .optimize = optimize, .root_source_file = b.path("example/main.zig") }),
+        .name = "zlr_example",
+    });
+
+    example.root_module.linkLibrary(libraw);
+    example.root_module.addIncludePath(b.path("libraw/"));
+
+    b.installArtifact(example);
+
+    const run_cmd = b.addRunArtifact(example);
+
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+
+    const run_step = b.step("run-example", "Run example");
+    run_step.dependOn(&run_cmd.step);
 }
 
 fn collectCppFiles(b: *std.Build, dir_path: []const u8) ![]const []const u8 {
     var files = try std.ArrayList([]const u8).initCapacity(b.allocator, 1);
-    var dir = std.fs.cwd().openDir(dir_path, .{ .iterate = true }) catch return &.{};
+    const abs = b.pathFromRoot(dir_path);
+    var dir = std.fs.openDirAbsolute(abs, .{ .iterate = true }) catch return &.{};
     defer dir.close();
 
     var it = dir.iterate();
     while (it.next() catch null) |entry| {
         if (entry.kind != .file) continue;
         if (!std.mem.endsWith(u8, entry.name, ".cpp")) continue;
+
+        if (std.mem.endsWith(u8, entry.name, "_ph.cpp")) continue;
+
         const full = std.fs.path.join(b.allocator, &.{ dir_path, entry.name }) catch continue;
         files.append(b.allocator, full) catch continue;
     }
