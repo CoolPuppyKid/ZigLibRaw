@@ -1,0 +1,8 @@
+.{
+    .name = .ZigLibRaw,
+    .version = "0.0.1",
+    .dependencies = .{},
+    .minimum_zig_version = "0.15.2",
+    .paths = .{""},
+    .fingerprint = 0x20e8b2b96c21c411,
+}
