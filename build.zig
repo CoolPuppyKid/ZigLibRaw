@@ -52,6 +52,8 @@ pub fn build(b: *std.Build) !void {
 
     const build_step = b.step("test-build", "Builds libraw");
     build_step.dependOn(&libraw.step);
+
+    b.installArtifact(libraw);
 }
 
 fn collectCppFiles(b: *std.Build, dir_path: []const u8) ![]const []const u8 {
