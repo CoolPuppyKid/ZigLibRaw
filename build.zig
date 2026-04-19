@@ -15,7 +15,9 @@ pub fn build(b: *std.Build) !void {
 
     libraw.linkLibCpp();
     libraw.linkLibC();
-    libraw.linkSystemLibrary("ws2_32");
+    if (target.result.os.tag == .windows) {
+        libraw.linkSystemLibrary("ws2_32");
+    }
 
     libraw.addIncludePath(b.path("."));
 
