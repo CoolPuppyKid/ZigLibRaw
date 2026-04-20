@@ -356,7 +356,7 @@ libraw_inline void crxDecodeSymbolL1(CrxBandParam *param, int32_t doMedianPredic
   // for not end of the line - use one symbol ahead to estimate next K
   if (notEOL)
   {
-    int32_t nextDelta = (param->lineBuf0[2] - param->lineBuf0[1]) << 1;
+    int32_t nextDelta = (int32_t)(((uint32_t)(param->lineBuf0[2] - param->lineBuf0[1])) << 1);
     bitCode = (bitCode + _abs(nextDelta)) >> 1;
     ++param->lineBuf0;
   }
