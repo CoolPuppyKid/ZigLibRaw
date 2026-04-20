@@ -235,7 +235,7 @@ void LibRaw::canon_load_raw()
           if (len == 0)
             continue;
           diff = getbits(len);
-          if ((diff & (1 << (len - 1))) == 0)
+          if (len > 0 && (diff & (1 << (len - 1))) == 0)
             diff -= (1 << len) - 1;
           if (i < 64)
             diffbuf[i] = diff;
